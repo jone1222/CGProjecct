@@ -1,0 +1,11 @@
+#version 400 core
+
+uniform vec3 mCol;
+out vec3 color;
+in vec3 oColor;
+void main()
+{
+        //color = vec3(1.0, 1.0, 0.0);
+		//color = mCol;
+		color = oColor;
+}
