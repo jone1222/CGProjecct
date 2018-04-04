@@ -30,7 +30,7 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 	//create the shaders
 	GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
 	GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-
+	
 	GLint Result = GL_FALSE;
 	int InfoLogLength;
 
