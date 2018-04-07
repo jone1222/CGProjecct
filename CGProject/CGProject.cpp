@@ -29,10 +29,12 @@ GLuint VertexArrayID;
 
 vector<float> point_vertices;
 vector<float> line_vertices;
+vector<float> lineS_vertices;
+
 
 vector<float> *target_vertices = &point_vertices;
 
-bool isPoint = true;
+int DrawMode = 0;		// 0 : Points / 1 : Lines / 2 : LineStrips
 
 
 GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
@@ -153,17 +155,24 @@ void myMouse(int button, int state, int x, int y) {
 		glutPostRedisplay(); //새로 다시 그리기
 	}
 	else if ((button == GLUT_RIGHT_BUTTON) && (state == GLUT_DOWN)) {
-		isPoint = !isPoint;
-		if (isPoint) {
-			MessageBox(NULL, "Point Drawing Mode", "POINT/LINE CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
+		if (DrawMode == 2) {
+			DrawMode -= 2;
+			MessageBox(NULL, "Point Drawing Mode", "POINT / LINE / STRIP CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
 			target_vertices = &point_vertices;
 		}
-		else {
-			MessageBox(NULL, "Line Drawing Mode", "POINT/LINE CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
+		else if ( DrawMode == 0 ) {
+			DrawMode++;
+			MessageBox(NULL, "Line Drawing Mode", "POINT/ LINE / STRIP CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
 			if ((line_vertices.size() / 6) % 2 == 1)
 				for(int i = 0 ; i < 6 ; i++)
 					line_vertices.pop_back();
 			target_vertices = &line_vertices;
+		}
+		else {
+			//DrawMode = 1
+			DrawMode++;
+			MessageBox(NULL, "Line Strip Drawing Mode", "POINT/ LINE / STRIP CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
+			target_vertices = &lineS_vertices;
 		}
 
 		glutPostRedisplay();
@@ -208,10 +217,16 @@ void renderScene(void)
 
 	//glDrawArrays(GL_POINTS, 0, 2);
 	if (point_vertices.size() != 0 || line_vertices.size() != 0) {
+
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*point_vertices.size(), point_vertices.data(), GL_DYNAMIC_DRAW);
 		glDrawArrays(GL_POINTS, 0, (point_vertices.size() / 6));		
+
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*line_vertices.size(), line_vertices.data(), GL_DYNAMIC_DRAW);
 		glDrawArrays(GL_LINES, 0, (line_vertices.size() / 6));
+
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*lineS_vertices.size(), lineS_vertices.data(), GL_DYNAMIC_DRAW);
+		glDrawArrays(GL_LINE_STRIP, 0, (lineS_vertices.size() / 6));
+			
 	}
 	//Double buffer
 	glutSwapBuffers();
