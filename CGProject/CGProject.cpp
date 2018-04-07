@@ -15,6 +15,9 @@
 #include <GL/glut.h>
 #include <GL/wglew.h>
 
+#define SCREEN_WIDTH 640
+#define SCREEN_HEIGHT 640
+
 using namespace std;
 
 GLuint g_programID;
@@ -23,7 +26,14 @@ GLuint g_programID;
 GLuint VertexBufferID[2];
 GLuint VertexArrayID;
 
-vector<float> g_vertices;
+
+vector<float> point_vertices;
+vector<float> line_vertices;
+
+vector<float> *target_vertices = &point_vertices;
+
+bool isPoint = true;
+
 
 GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 {
@@ -114,8 +124,8 @@ void myMouse(int button, int state, int x, int y) {
 	if ((button == GLUT_LEFT_BUTTON) && (state == GLUT_DOWN)) {
 		float nx, ny;
 
-		nx = 2.0 * (float)x / (float)479 - 1.0;
-		ny = -2.0 * (float)y / (float)479 + 1.0;
+		nx = 2.0 * (float)x / (float)(SCREEN_WIDTH - 1.0) - 1.0;
+		ny = -2.0 * (float)y / (float)(SCREEN_HEIGHT - 1.0) + 1.0;
 
 		//GLuint posLoc;
 
@@ -128,17 +138,32 @@ void myMouse(int button, int state, int x, int y) {
 		b = (rand() % 100) / 99.f;
 		//GLuint colLoc = glGetUniformLocation(g_programID, "mCol");
 		//glUniform3f(colLoc, r, g, b);
-		g_vertices.push_back(nx);
-		g_vertices.push_back(ny);
-		g_vertices.push_back(0.0);
-		g_vertices.push_back(r);
-		g_vertices.push_back(g);
-		g_vertices.push_back(b);
+		
+		target_vertices = &point_vertices;
+		/*if (isPoint)
+			target_vertices = &point_vertices;
+		else
+			target_vertices = &line_vertices;
+*/
+
+		target_vertices->push_back(nx);
+		target_vertices->push_back(ny);
+		target_vertices->push_back(0.0);
+		target_vertices->push_back(r);
+		target_vertices->push_back(g);
+		target_vertices->push_back(b);
 
 		glBindBuffer(GL_ARRAY_BUFFER, VertexBufferID[0]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*g_vertices.size(), g_vertices.data(), GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*target_vertices->size(), target_vertices->data(), GL_DYNAMIC_DRAW);
 
 		glutPostRedisplay(); //새로 다시 그리기
+	}
+	else if ((button == GLUT_RIGHT_BUTTON) && (state == GLUT_DOWN)) {
+		isPoint = !isPoint;
+		if(isPoint)
+			MessageBox(NULL, "Point Drawing Mode", "POINT/LINE CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
+		else
+			MessageBox(NULL, "Line Drawing Mode", "POINT/LINE CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
 	}
 }
 
@@ -179,8 +204,8 @@ void renderScene(void)
 
 
 	//glDrawArrays(GL_POINTS, 0, 2);
-	if (g_vertices.size() != 0)
-		glDrawArrays(GL_LINES, 0, (g_vertices.size() / 6));
+	if (target_vertices->size() != 0)
+		glDrawArrays(GL_LINES, 0, (target_vertices->size() / 6));
 	//Double buffer
 	glutSwapBuffers();
 }
@@ -213,7 +238,7 @@ void main(int argc, char **argv)
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	//These two functions are used to define the position and size of the window. 
 	glutInitWindowPosition(200, 200);
-	glutInitWindowSize(480, 480);
+	glutInitWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 	//This is used to define the name of the window.
 	glutCreateWindow("Simple OpenGL Window");
 
