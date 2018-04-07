@@ -29,7 +29,7 @@ GLuint VertexArrayID;
 
 vector<float> point_vertices;
 vector<float> line_vertices;
-vector<float> lineS_vertices;
+vector<vector<float>> lineS_vertices;
 
 
 vector<float> *target_vertices = &point_vertices;
@@ -172,7 +172,8 @@ void myMouse(int button, int state, int x, int y) {
 			//DrawMode = 1
 			DrawMode++;
 			MessageBox(NULL, "Line Strip Drawing Mode", "POINT/ LINE / STRIP CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
-			target_vertices = &lineS_vertices;
+			lineS_vertices.push_back(vector<float>());
+			target_vertices = &lineS_vertices.at( lineS_vertices.size() - 1 );
 		}
 
 		glutPostRedisplay();
@@ -216,7 +217,7 @@ void renderScene(void)
 
 
 	//glDrawArrays(GL_POINTS, 0, 2);
-	if (point_vertices.size() != 0 || line_vertices.size() != 0) {
+	if (point_vertices.size() != 0 || line_vertices.size() != 0 || lineS_vertices.size() != 0 ) {
 
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*point_vertices.size(), point_vertices.data(), GL_DYNAMIC_DRAW);
 		glDrawArrays(GL_POINTS, 0, (point_vertices.size() / 6));		
@@ -224,9 +225,10 @@ void renderScene(void)
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*line_vertices.size(), line_vertices.data(), GL_DYNAMIC_DRAW);
 		glDrawArrays(GL_LINES, 0, (line_vertices.size() / 6));
 
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*lineS_vertices.size(), lineS_vertices.data(), GL_DYNAMIC_DRAW);
-		glDrawArrays(GL_LINE_STRIP, 0, (lineS_vertices.size() / 6));
-			
+		for (int i = 0; i < lineS_vertices.size(); i++) {
+			glBufferData(GL_ARRAY_BUFFER, sizeof(float)*lineS_vertices.at(i).size() , lineS_vertices.at(i).data(), GL_DYNAMIC_DRAW);
+			glDrawArrays(GL_LINE_STRIP, 0, (lineS_vertices.at(i).size() / 6));
+		}
 	}
 	//Double buffer
 	glutSwapBuffers();
