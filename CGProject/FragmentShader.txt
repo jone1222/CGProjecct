@@ -3,9 +3,15 @@
 uniform vec3 mCol;
 out vec3 color;
 in vec3 oColor;
+
+in float inUseUniform;
+
 void main()
 {
         //color = vec3(1.0, 1.0, 0.0);
 		//color = mCol;
-		color = oColor;
+		if(inUseUniform != 1.0)
+			color = oColor;
+		else
+			color = mCol;
 }

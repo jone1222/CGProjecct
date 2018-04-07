@@ -51,6 +51,8 @@ int DrawMode = Points;		// 0 : Points / 1 : Lines / 2 : LineStrips
 
 int ColorMode = RANDOM;
 
+bool isUniform = false;
+
 
 GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 {
@@ -142,10 +144,25 @@ void swapColor(float* r, float* g, float* b) {
 	}
 }
 
-void swapAllColor(vector<float> vec) {
+void swapAllColor(bool doChange) {
+	/*
 	for (int i = 3; i < vec.size(); i+= 6)
 		swapColor(&vec.at(i), &vec.at(i + 1), &vec.at(i + 2));
+	*/
 	
+	GLuint inUseLoc;
+	inUseLoc = glGetAttribLocation(g_programID, "UseUniform");
+	if (doChange)
+		glVertexAttrib1f(inUseLoc, 1.0);
+	else
+		glVertexAttrib1f(inUseLoc, 0.0);
+
+	isUniform = doChange;
+
+	GLuint colLoc = glGetUniformLocation(g_programID, "mCol");
+	float r, g, b;
+	swapColor(&r, &g, &b);
+	glUniform3f(colLoc, r, g, b);
 }
 
 void ColorSelectEvent(int x, int y , float* r, float* g, float* b) {
@@ -226,6 +243,18 @@ void myMouse(int button, int state, int x, int y) {
 			MessageBox(NULL, "Line Strip Drawing Mode", "POINT/ LINE / STRIP CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
 			lineS_vertices.push_back(vector<float>());
 			target_vertices = &lineS_vertices.at( lineS_vertices.size() - 1 );
+		}
+
+		glutPostRedisplay();
+	}
+	else if((button == GLUT_MIDDLE_BUTTON) && (state == GLUT_DOWN)) {
+		//유니폼으로 할수 있는 방법은 없는가?
+		int doChange = MessageBox(NULL, "YES : CHANGE ALL COLOR / CANCEL : Reset ALL COLOR", "CHANGE ALL COLOR MSGBOX", MB_OKCANCEL | MB_ICONEXCLAMATION);
+		if (doChange == IDOK) {
+			swapAllColor(true);
+		}
+		else {
+			swapAllColor(false);
 		}
 
 		glutPostRedisplay();
