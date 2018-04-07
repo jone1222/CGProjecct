@@ -139,12 +139,6 @@ void myMouse(int button, int state, int x, int y) {
 		//GLuint colLoc = glGetUniformLocation(g_programID, "mCol");
 		//glUniform3f(colLoc, r, g, b);
 		
-		target_vertices = &point_vertices;
-		/*if (isPoint)
-			target_vertices = &point_vertices;
-		else
-			target_vertices = &line_vertices;
-*/
 
 		target_vertices->push_back(nx);
 		target_vertices->push_back(ny);
@@ -160,10 +154,19 @@ void myMouse(int button, int state, int x, int y) {
 	}
 	else if ((button == GLUT_RIGHT_BUTTON) && (state == GLUT_DOWN)) {
 		isPoint = !isPoint;
-		if(isPoint)
+		if (isPoint) {
 			MessageBox(NULL, "Point Drawing Mode", "POINT/LINE CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
-		else
+			target_vertices = &point_vertices;
+		}
+		else {
 			MessageBox(NULL, "Line Drawing Mode", "POINT/LINE CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
+			if ((line_vertices.size() / 6) % 2 == 1)
+				for(int i = 0 ; i < 6 ; i++)
+					line_vertices.pop_back();
+			target_vertices = &line_vertices;
+		}
+
+		glutPostRedisplay();
 	}
 }
 
@@ -204,8 +207,12 @@ void renderScene(void)
 
 
 	//glDrawArrays(GL_POINTS, 0, 2);
-	if (target_vertices->size() != 0)
-		glDrawArrays(GL_LINES, 0, (target_vertices->size() / 6));
+	if (point_vertices.size() != 0 || line_vertices.size() != 0) {
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*point_vertices.size(), point_vertices.data(), GL_DYNAMIC_DRAW);
+		glDrawArrays(GL_POINTS, 0, (point_vertices.size() / 6));		
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*line_vertices.size(), line_vertices.data(), GL_DYNAMIC_DRAW);
+		glDrawArrays(GL_LINES, 0, (line_vertices.size() / 6));
+	}
 	//Double buffer
 	glutSwapBuffers();
 }
