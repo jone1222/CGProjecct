@@ -179,6 +179,54 @@ void myMouse(int button, int state, int x, int y) {
 		glutPostRedisplay();
 	}
 }
+//
+void ScreenToNorm(float* x, float* y) {
+	float nx, ny;
+
+	nx = 2.0 * (float)*x / (float)(SCREEN_WIDTH - 1.0) - 1.0;
+	ny = -2.0 * (float)*y / (float)(SCREEN_HEIGHT - 1.0) + 1.0;
+	
+	*x = nx;
+	*y = ny;
+}
+void DrawColorSelectionArea() {
+	//색상 선택 영역 그리기
+	
+	
+	float vtxData[] = {
+		25, 10, 0.0, 1.0, 0.0, 0.0,
+		45, 10, 0.0, 0.0, 1.0, 0.0,
+		65, 10, 0.0, 0.0, 0.0, 1.0,
+		85, 10, 0.0, 0.0, 0.0, 0.0,
+	};
+	for (int i = 0; i < 24; i+=6) {
+		ScreenToNorm(&vtxData[i], &vtxData[i+1]);
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, VertexBufferID[1]);
+
+	GLuint posLoc = glGetAttribLocation(g_programID, "pos");
+	glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (void*)(0));
+	glEnableVertexAttribArray(posLoc);
+
+
+	//Color
+	//GLuint colLoc = glGetUniformLocation(g_programID, "mCol");
+	//glUniform3f(colLoc, 0.0, 1.0, 0.0);
+	GLuint colLoc = glGetAttribLocation(g_programID, "iColor");
+	glVertexAttribPointer(colLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (void*)(sizeof(GLfloat) * 3));
+	glEnableVertexAttribArray(colLoc);
+
+	GLuint sizeLoc;
+	sizeLoc = glGetAttribLocation(g_programID, "pSize");
+	glVertexAttrib1f(sizeLoc, 20.0);
+	/*glBindBuffer(GL_ARRAY_BUFFER, VertexBufferID[1]);
+	glVertexAttribPointer(sizeLoc, 1, GL_FLOAT, GL_FALSE, 0, (void*)(0));
+	glEnableVertexAttribArray(sizeLoc);*/
+
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*6, vtxData, GL_DYNAMIC_DRAW);
+	glDrawArrays(GL_POINTS, 0, 4);
+}
 
 void renderScene(void)
 {
@@ -189,6 +237,11 @@ void renderScene(void)
 
 	//Clear all pixels
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+	//색상선택영역 그리기
+	DrawColorSelectionArea();
+
 	//Let's draw something here
 	//Draw Line
 	GLuint posLoc;
@@ -206,14 +259,10 @@ void renderScene(void)
 	glVertexAttribPointer(colLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (void*)(sizeof(GLfloat) * 3));
 	glEnableVertexAttribArray(colLoc);
 
-
-	//glBindBuffer(GL_ARRAY_BUFFER, VertexBufferID[1]);
-	//GLuint sizeLoc;
-	//sizeLoc = glGetAttribLocation(g_programID, "pSize");
-	////glVertexAttribPointer(sizeLoc, 1, GL_FLOAT, GL_FALSE, sizeof(GLfloat)*4, (void*)(sizeof(GLfloat)*3));
-	//glBindBuffer(GL_ARRAY_BUFFER, VertexBufferID[1]);
-	//glVertexAttribPointer(sizeLoc, 1, GL_FLOAT, GL_FALSE, 0, (void*)(0));
-	//glEnableVertexAttribArray(sizeLoc);
+	GLuint sizeLoc;
+	sizeLoc = glGetAttribLocation(g_programID, "pSize");
+	glVertexAttrib1f(sizeLoc, 10.0);
+	
 
 
 	//glDrawArrays(GL_POINTS, 0, 2);
@@ -253,6 +302,8 @@ void init()
 
 }
 
+
+
 void main(int argc, char **argv)
 {
 	//init GLUT and create Window
@@ -281,7 +332,7 @@ void main(int argc, char **argv)
 
 	//float vertices[] = { -0.5, -0.3, 0.0, 0.2, 0.7, 0.0 };
 	//float sizes[] = { 10.0, 20.0, 30.0 };
-	float vtxData[] = { -0.5, -0.3, 0.0, 0.3, 0.2, 0.1, 0.2, 0.7, 0.0, 0.7, 0.8, 0.9 };
+	
 	//Create Vertex Buffer
 	//GLuint VertexBufferID;
 	glGenBuffers(2, VertexBufferID);
