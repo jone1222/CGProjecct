@@ -34,7 +34,22 @@ vector<vector<float>> lineS_vertices;
 
 vector<float> *target_vertices = &point_vertices;
 
-int DrawMode = 0;		// 0 : Points / 1 : Lines / 2 : LineStrips
+enum MyMode {
+	Points,
+	Lines,
+	LineStrips
+};
+enum MyColor {
+	RED,
+	BLUE,
+	GREEN,
+	BLACK,
+	RANDOM
+};
+
+int DrawMode = Points;		// 0 : Points / 1 : Lines / 2 : LineStrips
+
+int ColorMode = RANDOM;
 
 
 GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
@@ -116,6 +131,44 @@ GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 
 	return ProgramID;
 }
+void swapColor(float* r, float* g, float* b) {
+	switch (ColorMode) {
+	case RED: *r = 1.0; *g = 0.0; *b = 0.0;  break;
+	case BLUE: *r = 0.0; *g = 0.0; *b = 1.0; break;
+	case GREEN: *r = 0.0; *g = 1.0; *b = 0.0; break;
+	case BLACK: *r = 0.0; *g = 0.0; *b = 0.0; break;
+	case RANDOM: *r = (rand() % 100) / 99.f; *g = (rand() % 100) / 99.f; *b = (rand() % 100) / 99.f; break;
+	default: break;
+	}
+}
+
+void swapAllColor(vector<float> vec) {
+	for (int i = 3; i < vec.size(); i+= 6)
+		swapColor(&vec.at(i), &vec.at(i + 1), &vec.at(i + 2));
+	
+}
+
+void ColorSelectEvent(int x, int y , float* r, float* g, float* b) {
+	/* 
+		RED: 0~20
+		GREEN 20~40
+		BLUE 40~60
+		BLACK 60~80
+	*/
+	if (y < 20) {
+		if (x >= 0 && x <= 20)
+			ColorMode = RED;
+		else if( x > 20 && x <= 40 )
+			ColorMode = GREEN;
+		else if (x > 40 && x <= 60)
+			ColorMode = BLUE;
+		else if (x > 60 && x <= 80)
+			ColorMode = BLACK;
+
+		swapColor(r, g, b);
+	}
+
+}
 
 void myMouse(int button, int state, int x, int y) {
 
@@ -123,21 +176,20 @@ void myMouse(int button, int state, int x, int y) {
 	static float g = 0.0;
 	static float b = 0.0;
 
+	
 	if ((button == GLUT_LEFT_BUTTON) && (state == GLUT_DOWN)) {
+		if ((x >= 0 && x <= 120) && (y <= 25)) {
+			ColorSelectEvent(x, y, &r, &g, &b);
+			return;
+		}
 		float nx, ny;
 
 		nx = 2.0 * (float)x / (float)(SCREEN_WIDTH - 1.0) - 1.0;
 		ny = -2.0 * (float)y / (float)(SCREEN_HEIGHT - 1.0) + 1.0;
 
-		//GLuint posLoc;
-
-		//posLoc = glGetAttribLocation(g_programID, "pos");
-		//glVertexAttrib3f(posLoc, nx, ny, 0.0);
 
 
-		r = (rand() % 100) / 99.f;
-		g = (rand() % 100) / 99.f;
-		b = (rand() % 100) / 99.f;
+		swapColor(&r, &g, &b);
 		//GLuint colLoc = glGetUniformLocation(g_programID, "mCol");
 		//glUniform3f(colLoc, r, g, b);
 		
@@ -189,15 +241,17 @@ void ScreenToNorm(float* x, float* y) {
 	*x = nx;
 	*y = ny;
 }
+
+
 void DrawColorSelectionArea() {
 	//색상 선택 영역 그리기
 	
 	
 	float vtxData[] = {
-		25, 10, 0.0, 1.0, 0.0, 0.0,
-		45, 10, 0.0, 0.0, 1.0, 0.0,
-		65, 10, 0.0, 0.0, 0.0, 1.0,
-		85, 10, 0.0, 0.0, 0.0, 0.0,
+		10, 10, 0.0, 1.0, 0.0, 0.0,
+		30, 10, 0.0, 0.0, 1.0, 0.0,
+		50, 10, 0.0, 0.0, 0.0, 1.0,
+		70, 10, 0.0, 0.0, 0.0, 0.0,
 	};
 	for (int i = 0; i < 24; i+=6) {
 		ScreenToNorm(&vtxData[i], &vtxData[i+1]);
