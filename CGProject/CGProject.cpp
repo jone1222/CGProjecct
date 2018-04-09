@@ -193,7 +193,13 @@ void ColorSelectEvent(int x, int y , float* r, float* g, float* b) {
 }
 
 bool isPtOnLine(float pt_x, float pt_y, float start_x, float start_y, float end_x, float end_y) {
-	
+	POINT pts[4];
+	pts[0].x = start_x; pts[0].y = start_y - 5;
+	pts[1].x = start_x; pts[1].y = start_y + 5;
+	pts[2].x = end_x; pts[2].y = end_y + 5;
+	pts[3].x = end_x; pts[3].y = end_y - 5;
+	HRGN rgn = CreatePolygonRgn(pts, 4, ALTERNATE);
+	return PtInRegion(rgn,pt_x, pt_y);
 }
 
 void myMouse(int button, int state, int x, int y) {
@@ -232,6 +238,7 @@ void myMouse(int button, int state, int x, int y) {
 			glBufferData(GL_ARRAY_BUFFER, sizeof(float)*target_vertices->size(), target_vertices->data(), GL_DYNAMIC_DRAW);
 		}
 		else {
+			bool isFound = false;
 			float nx = x;
 			float ny = y;
 			//float x_margin = 5 / (float)SCREEN_WIDTH;
@@ -246,10 +253,59 @@ void myMouse(int button, int state, int x, int y) {
 				HRGN PtRgn = CreateRectRgn(pt_x - 5, pt_y - 5, 
 					pt_x + 5, pt_y + 5);
 				if (PtInRegion(PtRgn, nx, ny)){
+					isFound = true;
 					MessageBox(NULL, "Point Selected", "SELECT EVENT", MB_OK | MB_ICONEXCLAMATION);
 					swapColor(&r, &g, &b);
 					point_vertices.at(i + 3) = r;	point_vertices.at(i + 4) = g;	point_vertices.at(i + 5) = b;
 					break;
+				}
+			}
+			if (!isFound) {
+				for (int i = 0; i < line_vertices.size(); i += 12) {
+					float start_x = line_vertices.at(i);
+					float start_y = line_vertices.at(i+1);
+					float end_x = line_vertices.at(i+6);
+					float end_y = line_vertices.at(i+7);
+					NormToScreen(&start_x, &start_y);
+					NormToScreen(&end_x, &end_y);
+
+					if (isPtOnLine(nx, ny, start_x, start_y, end_x, end_y)) {
+						isFound = true;
+						MessageBox(NULL, "Line Selected", "SELECT EVENT", MB_OK | MB_ICONEXCLAMATION);
+						swapColor(&r, &g, &b);
+						line_vertices.at(i + 3) = r;	line_vertices.at(i + 4) = g;	line_vertices.at(i + 5) = b;
+						line_vertices.at(i + 9) = r;	line_vertices.at(i + 10) = g;	line_vertices.at(i + 11) = b;
+						break;
+					}
+
+				}
+			}
+			if (!isFound) {
+				for (int i = 0; i < lineS_vertices.size(); i++) {
+					if (lineS_vertices.at(i).size() < 12)
+						continue;
+
+					for (int j = 0; j < lineS_vertices.at(i).size() - 6; j += 6) {
+						float start_x = lineS_vertices.at(i).at(j);
+						float start_y = lineS_vertices.at(i).at(j + 1);
+						float end_x = lineS_vertices.at(i).at(j + 6);
+						float end_y = lineS_vertices.at(i).at(j + 7);
+						NormToScreen(&start_x, &start_y);
+						NormToScreen(&end_x, &end_y);
+
+						if (isPtOnLine(nx, ny, start_x, start_y, end_x, end_y)) {
+							isFound = true;
+							MessageBox(NULL, "LineStrip Selected", "SELECT EVENT", MB_OK | MB_ICONEXCLAMATION);
+							swapColor(&r, &g, &b);
+							
+							for (int k = 3; k < lineS_vertices.at(i).size(); k += 6) {
+								lineS_vertices.at(i).at(k) = r; lineS_vertices.at(i).at(k + 1) = g; lineS_vertices.at(i).at(k + 2) = b;
+							}
+
+							break;
+						}
+
+					}
 				}
 			}
 		}
