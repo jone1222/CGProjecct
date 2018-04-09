@@ -17,6 +17,7 @@
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 640
+#define LINE_MARGIN 5
 
 using namespace std;
 
@@ -55,6 +56,8 @@ bool isSelect = false;
 
 bool isUniform = false;
 
+void ScreenToNorm(float *x, float *y);
+void NormToScreen(float* nx, float* ny);
 
 GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path)
 {
@@ -189,6 +192,10 @@ void ColorSelectEvent(int x, int y , float* r, float* g, float* b) {
 
 }
 
+bool isPtOnLine(float pt_x, float pt_y, float start_x, float start_y, float end_x, float end_y) {
+	
+}
+
 void myMouse(int button, int state, int x, int y) {
 
 	static float r = 1.0;
@@ -197,32 +204,55 @@ void myMouse(int button, int state, int x, int y) {
 
 	
 	if ((button == GLUT_LEFT_BUTTON) && (state == GLUT_DOWN)) {
-		if ((x >= 0 && x <= 120) && (y <= 25)) {
-			ColorSelectEvent(x, y, &r, &g, &b);
-			return;
+		if (!isSelect) {
+			if ((x >= 0 && x <= 120) && (y <= 25)) {
+				ColorSelectEvent(x, y, &r, &g, &b);
+				return;
+			}
+			float nx, ny;
+
+			nx = 2.0 * (float)x / (float)(SCREEN_WIDTH - 1.0) - 1.0;
+			ny = -2.0 * (float)y / (float)(SCREEN_HEIGHT - 1.0) + 1.0;
+
+
+
+			swapColor(&r, &g, &b);
+			//GLuint colLoc = glGetUniformLocation(g_programID, "mCol");
+			//glUniform3f(colLoc, r, g, b);
+
+
+			target_vertices->push_back(nx);
+			target_vertices->push_back(ny);
+			target_vertices->push_back(0.0);
+			target_vertices->push_back(r);
+			target_vertices->push_back(g);
+			target_vertices->push_back(b);
+
+			glBindBuffer(GL_ARRAY_BUFFER, VertexBufferID[0]);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(float)*target_vertices->size(), target_vertices->data(), GL_DYNAMIC_DRAW);
 		}
-		float nx, ny;
+		else {
+			float nx = x;
+			float ny = y;
+			//float x_margin = 5 / (float)SCREEN_WIDTH;
+			//float y_margin = 5 / (float)SCREEN_HEIGHT;
 
-		nx = 2.0 * (float)x / (float)(SCREEN_WIDTH - 1.0) - 1.0;
-		ny = -2.0 * (float)y / (float)(SCREEN_HEIGHT - 1.0) + 1.0;
-
-
-
-		swapColor(&r, &g, &b);
-		//GLuint colLoc = glGetUniformLocation(g_programID, "mCol");
-		//glUniform3f(colLoc, r, g, b);
-		
-
-		target_vertices->push_back(nx);
-		target_vertices->push_back(ny);
-		target_vertices->push_back(0.0);
-		target_vertices->push_back(r);
-		target_vertices->push_back(g);
-		target_vertices->push_back(b);
-
-		glBindBuffer(GL_ARRAY_BUFFER, VertexBufferID[0]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(float)*target_vertices->size(), target_vertices->data(), GL_DYNAMIC_DRAW);
-
+			//NormToScreen(&nx, &ny);
+			//Select Mode
+			for (int i = 0; i < point_vertices.size(); i += 6) {
+				float pt_x = point_vertices.at(i);
+				float pt_y = point_vertices.at(i + 1);
+				NormToScreen(&pt_x, &pt_y);
+				HRGN PtRgn = CreateRectRgn(pt_x - 5, pt_y - 5, 
+					pt_x + 5, pt_y + 5);
+				if (PtInRegion(PtRgn, nx, ny)){
+					MessageBox(NULL, "Point Selected", "SELECT EVENT", MB_OK | MB_ICONEXCLAMATION);
+					swapColor(&r, &g, &b);
+					point_vertices.at(i + 3) = r;	point_vertices.at(i + 4) = g;	point_vertices.at(i + 5) = b;
+					break;
+				}
+			}
+		}
 		glutPostRedisplay(); //새로 다시 그리기
 	}
 	else if ((button == GLUT_RIGHT_BUTTON) && (state == GLUT_DOWN)) {
@@ -264,13 +294,15 @@ void myMouse(int button, int state, int x, int y) {
 }
 
 void myKeyBoard(unsigned char key, int x, int y) {
-	if (key == 'S' || key == 's')
+	if (key == 'S' || key == 's') {
 		isSelect = !isSelect;
+		if (isSelect)
+			MessageBox(NULL, "Select Mode", "Drawing / Selection CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
+		else
+			MessageBox(NULL, "Drawing Mode", "Drawing / Selection CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
+	}
 
-	if(isSelect)
-		MessageBox(NULL, "Select Mode", "Drawing / Selection CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
-	else
-		MessageBox(NULL, "Drawing Mode", "Drawing / Selection CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
+	
 }
 //
 void ScreenToNorm(float* x, float* y) {
@@ -282,7 +314,17 @@ void ScreenToNorm(float* x, float* y) {
 	*x = nx;
 	*y = ny;
 }
+void NormToScreen(float* nx, float* ny) {
+	float x, y;
 
+	//nx = (2.0 * (float)*x) / (float)(SCREEN_WIDTH - 1.0) - 1.0;
+	//ny = (-2.0 * (float)*y) / (float)(SCREEN_HEIGHT - 1.0) + 1.0;
+	x = (*nx + 1.0) * (float)(SCREEN_WIDTH - 1.0) / 2.0;
+	y = (*ny - 1.0) * (float)(SCREEN_HEIGHT - 1.0) / (-2.0);
+
+	*nx = x;
+	*ny = y;
+}
 
 void DrawColorSelectionArea() {
 	//색상 선택 영역 그리기
