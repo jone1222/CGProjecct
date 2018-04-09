@@ -51,6 +51,8 @@ int DrawMode = Points;		// 0 : Points / 1 : Lines / 2 : LineStrips
 
 int ColorMode = RANDOM;
 
+bool isSelect = false;
+
 bool isUniform = false;
 
 
@@ -260,6 +262,16 @@ void myMouse(int button, int state, int x, int y) {
 		glutPostRedisplay();
 	}
 }
+
+void myKeyBoard(unsigned char key, int x, int y) {
+	if (key == 'S' || key == 's')
+		isSelect = !isSelect;
+
+	if(isSelect)
+		MessageBox(NULL, "Select Mode", "Drawing / Selection CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
+	else
+		MessageBox(NULL, "Drawing Mode", "Drawing / Selection CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
+}
 //
 void ScreenToNorm(float* x, float* y) {
 	float nx, ny;
@@ -427,6 +439,7 @@ void main(int argc, char **argv)
 
 
 	glutMouseFunc(myMouse);	//마우스 콜백 등록
+	glutKeyboardFunc(myKeyBoard);
 
 	glutDisplayFunc(renderScene);
 
