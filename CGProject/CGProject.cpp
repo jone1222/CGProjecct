@@ -149,25 +149,29 @@ void swapColor(float* r, float* g, float* b) {
 	}
 }
 
-void swapAllColor(bool doChange) {
-	/*
+void swapVecColor(vector<float> vec) {
 	for (int i = 3; i < vec.size(); i+= 6)
 		swapColor(&vec.at(i), &vec.at(i + 1), &vec.at(i + 2));
+}
+
+void swapAllColor() {
+	for (int i = 3; i < point_vertices.size(); i += 6) {
+		swapColor(&point_vertices.at(i), &point_vertices.at(i + 1), &point_vertices.at(i + 2));
+	}
+	for (int i = 3; i < line_vertices.size(); i += 6) {
+		swapColor(&line_vertices.at(i), &line_vertices.at(i + 1), &line_vertices.at(i + 2));
+	}
+	for (int i = 0; i < lineS_vertices.size(); i++) {
+		for (int j = 3; j < lineS_vertices.at(i).size(); j += 6) {
+			swapColor(&lineS_vertices.at(i).at(j), &lineS_vertices.at(i).at(j+1), &lineS_vertices.at(i).at(j+2));
+		}
+	}
+	/*
+	swapVecColor(point_vertices);
+	swapVecColor(line_vertices);
+	for (int i = 0; i < lineS_vertices.size(); i++)
+		swapVecColor(lineS_vertices.at(i));
 	*/
-	
-	GLuint inUseLoc;
-	inUseLoc = glGetAttribLocation(g_programID, "UseUniform");
-	if (doChange)
-		glVertexAttrib1f(inUseLoc, 1.0);
-	else
-		glVertexAttrib1f(inUseLoc, 0.0);
-
-	isUniform = doChange;
-
-	GLuint colLoc = glGetUniformLocation(g_programID, "mCol");
-	float r, g, b;
-	swapColor(&r, &g, &b);
-	glUniform3f(colLoc, r, g, b);
 }
 
 void ColorSelectEvent(int x, int y , float* r, float* g, float* b) {
@@ -337,13 +341,10 @@ void myMouse(int button, int state, int x, int y) {
 	}
 	else if((button == GLUT_MIDDLE_BUTTON) && (state == GLUT_DOWN)) {
 		//유니폼으로 할수 있는 방법은 없는가?
-		int doChange = MessageBox(NULL, "YES : CHANGE ALL COLOR / CANCEL : Reset ALL COLOR", "CHANGE ALL COLOR MSGBOX", MB_OKCANCEL | MB_ICONEXCLAMATION);
-		if (doChange == IDOK) {
-			swapAllColor(true);
-		}
-		else {
-			swapAllColor(false);
-		}
+		int doChange = MessageBox(NULL, "YES : CHANGE ALL COLOR", "CHANGE ALL COLOR MSGBOX", MB_OKCANCEL | MB_ICONEXCLAMATION);
+		if (doChange == IDOK)
+			swapAllColor();
+
 
 		glutPostRedisplay();
 	}
