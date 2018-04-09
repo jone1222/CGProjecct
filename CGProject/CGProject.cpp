@@ -166,12 +166,6 @@ void swapAllColor() {
 			swapColor(&lineS_vertices.at(i).at(j), &lineS_vertices.at(i).at(j+1), &lineS_vertices.at(i).at(j+2));
 		}
 	}
-	/*
-	swapVecColor(point_vertices);
-	swapVecColor(line_vertices);
-	for (int i = 0; i < lineS_vertices.size(); i++)
-		swapVecColor(lineS_vertices.at(i));
-	*/
 }
 
 void ColorSelectEvent(int x, int y , float* r, float* g, float* b) {
@@ -205,7 +199,73 @@ bool isPtOnLine(float pt_x, float pt_y, float start_x, float start_y, float end_
 	HRGN rgn = CreatePolygonRgn(pts, 4, ALTERNATE);
 	return PtInRegion(rgn,pt_x, pt_y);
 }
+void changeOnPoint(float nx, float ny, bool* isFound) {
+	float r, g, b;
+	for (int i = 0; i < point_vertices.size(); i += 6) {
+		float pt_x = point_vertices.at(i);
+		float pt_y = point_vertices.at(i + 1);
+		NormToScreen(&pt_x, &pt_y);
+		HRGN PtRgn = CreateRectRgn(pt_x - 5, pt_y - 5,
+			pt_x + 5, pt_y + 5);
+		if (PtInRegion(PtRgn, nx, ny)) {
+			*isFound = true;
+			MessageBox(NULL, "Point Selected", "SELECT EVENT", MB_OK | MB_ICONEXCLAMATION);
+			swapColor(&r, &g, &b);
+			point_vertices.at(i + 3) = r;	point_vertices.at(i + 4) = g;	point_vertices.at(i + 5) = b;
+			break;
+		}
+	}
+}
+void changeOnLine(float nx, float ny, bool* isFound) {
+	float r, g, b;
+	for (int i = 0; i < line_vertices.size(); i += 12) {
+		float start_x = line_vertices.at(i);
+		float start_y = line_vertices.at(i + 1);
+		float end_x = line_vertices.at(i + 6);
+		float end_y = line_vertices.at(i + 7);
+		NormToScreen(&start_x, &start_y);
+		NormToScreen(&end_x, &end_y);
 
+		if (isPtOnLine(nx, ny, start_x, start_y, end_x, end_y)) {
+			*isFound = true;
+			MessageBox(NULL, "Line Selected", "SELECT EVENT", MB_OK | MB_ICONEXCLAMATION);
+			swapColor(&r, &g, &b);
+			line_vertices.at(i + 3) = r;	line_vertices.at(i + 4) = g;	line_vertices.at(i + 5) = b;
+			line_vertices.at(i + 9) = r;	line_vertices.at(i + 10) = g;	line_vertices.at(i + 11) = b;
+			break;
+		}
+
+	}
+}
+void changeOnLineStrip(float nx, float ny, bool *isFound) {
+	float r, g, b;
+	for (int i = 0; i < lineS_vertices.size(); i++) {
+		if (lineS_vertices.at(i).size() < 12)
+			continue;
+
+		for (int j = 0; j < lineS_vertices.at(i).size() - 6; j += 6) {
+			float start_x = lineS_vertices.at(i).at(j);
+			float start_y = lineS_vertices.at(i).at(j + 1);
+			float end_x = lineS_vertices.at(i).at(j + 6);
+			float end_y = lineS_vertices.at(i).at(j + 7);
+			NormToScreen(&start_x, &start_y);
+			NormToScreen(&end_x, &end_y);
+
+			if (isPtOnLine(nx, ny, start_x, start_y, end_x, end_y)) {
+				*isFound = true;
+				MessageBox(NULL, "LineStrip Selected", "SELECT EVENT", MB_OK | MB_ICONEXCLAMATION);
+				swapColor(&r, &g, &b);
+
+				for (int k = 3; k < lineS_vertices.at(i).size(); k += 6) {
+					lineS_vertices.at(i).at(k) = r; lineS_vertices.at(i).at(k + 1) = g; lineS_vertices.at(i).at(k + 2) = b;
+				}
+
+				break;
+			}
+
+		}
+	}
+}
 void myMouse(int button, int state, int x, int y) {
 
 	static float r = 1.0;
@@ -224,12 +284,7 @@ void myMouse(int button, int state, int x, int y) {
 			nx = 2.0 * (float)x / (float)(SCREEN_WIDTH - 1.0) - 1.0;
 			ny = -2.0 * (float)y / (float)(SCREEN_HEIGHT - 1.0) + 1.0;
 
-
-
 			swapColor(&r, &g, &b);
-			//GLuint colLoc = glGetUniformLocation(g_programID, "mCol");
-			//glUniform3f(colLoc, r, g, b);
-
 
 			target_vertices->push_back(nx);
 			target_vertices->push_back(ny);
@@ -245,73 +300,14 @@ void myMouse(int button, int state, int x, int y) {
 			bool isFound = false;
 			float nx = x;
 			float ny = y;
-			//float x_margin = 5 / (float)SCREEN_WIDTH;
-			//float y_margin = 5 / (float)SCREEN_HEIGHT;
-
-			//NormToScreen(&nx, &ny);
+			
 			//Select Mode
-			for (int i = 0; i < point_vertices.size(); i += 6) {
-				float pt_x = point_vertices.at(i);
-				float pt_y = point_vertices.at(i + 1);
-				NormToScreen(&pt_x, &pt_y);
-				HRGN PtRgn = CreateRectRgn(pt_x - 5, pt_y - 5, 
-					pt_x + 5, pt_y + 5);
-				if (PtInRegion(PtRgn, nx, ny)){
-					isFound = true;
-					MessageBox(NULL, "Point Selected", "SELECT EVENT", MB_OK | MB_ICONEXCLAMATION);
-					swapColor(&r, &g, &b);
-					point_vertices.at(i + 3) = r;	point_vertices.at(i + 4) = g;	point_vertices.at(i + 5) = b;
-					break;
-				}
-			}
-			if (!isFound) {
-				for (int i = 0; i < line_vertices.size(); i += 12) {
-					float start_x = line_vertices.at(i);
-					float start_y = line_vertices.at(i+1);
-					float end_x = line_vertices.at(i+6);
-					float end_y = line_vertices.at(i+7);
-					NormToScreen(&start_x, &start_y);
-					NormToScreen(&end_x, &end_y);
-
-					if (isPtOnLine(nx, ny, start_x, start_y, end_x, end_y)) {
-						isFound = true;
-						MessageBox(NULL, "Line Selected", "SELECT EVENT", MB_OK | MB_ICONEXCLAMATION);
-						swapColor(&r, &g, &b);
-						line_vertices.at(i + 3) = r;	line_vertices.at(i + 4) = g;	line_vertices.at(i + 5) = b;
-						line_vertices.at(i + 9) = r;	line_vertices.at(i + 10) = g;	line_vertices.at(i + 11) = b;
-						break;
-					}
-
-				}
-			}
-			if (!isFound) {
-				for (int i = 0; i < lineS_vertices.size(); i++) {
-					if (lineS_vertices.at(i).size() < 12)
-						continue;
-
-					for (int j = 0; j < lineS_vertices.at(i).size() - 6; j += 6) {
-						float start_x = lineS_vertices.at(i).at(j);
-						float start_y = lineS_vertices.at(i).at(j + 1);
-						float end_x = lineS_vertices.at(i).at(j + 6);
-						float end_y = lineS_vertices.at(i).at(j + 7);
-						NormToScreen(&start_x, &start_y);
-						NormToScreen(&end_x, &end_y);
-
-						if (isPtOnLine(nx, ny, start_x, start_y, end_x, end_y)) {
-							isFound = true;
-							MessageBox(NULL, "LineStrip Selected", "SELECT EVENT", MB_OK | MB_ICONEXCLAMATION);
-							swapColor(&r, &g, &b);
-							
-							for (int k = 3; k < lineS_vertices.at(i).size(); k += 6) {
-								lineS_vertices.at(i).at(k) = r; lineS_vertices.at(i).at(k + 1) = g; lineS_vertices.at(i).at(k + 2) = b;
-							}
-
-							break;
-						}
-
-					}
-				}
-			}
+			changeOnPoint(nx, ny, &isFound);
+			if (!isFound)
+				changeOnLine(nx, ny, &isFound);
+			if (!isFound)
+				changeOnLineStrip(nx, ny, &isFound);
+			
 		}
 		glutPostRedisplay(); //새로 다시 그리기
 	}
@@ -358,7 +354,6 @@ void myKeyBoard(unsigned char key, int x, int y) {
 		else
 			MessageBox(NULL, "Drawing Mode", "Drawing / Selection CHANGE EVENT", MB_OK | MB_ICONEXCLAMATION);
 	}
-
 	
 }
 //
@@ -403,10 +398,6 @@ void DrawColorSelectionArea() {
 	glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (void*)(0));
 	glEnableVertexAttribArray(posLoc);
 
-
-	//Color
-	//GLuint colLoc = glGetUniformLocation(g_programID, "mCol");
-	//glUniform3f(colLoc, 0.0, 1.0, 0.0);
 	GLuint colLoc = glGetAttribLocation(g_programID, "iColor");
 	glVertexAttribPointer(colLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (void*)(sizeof(GLfloat) * 3));
 	glEnableVertexAttribArray(colLoc);
@@ -414,9 +405,7 @@ void DrawColorSelectionArea() {
 	GLuint sizeLoc;
 	sizeLoc = glGetAttribLocation(g_programID, "pSize");
 	glVertexAttrib1f(sizeLoc, 20.0);
-	/*glBindBuffer(GL_ARRAY_BUFFER, VertexBufferID[1]);
-	glVertexAttribPointer(sizeLoc, 1, GL_FLOAT, GL_FALSE, 0, (void*)(0));
-	glEnableVertexAttribArray(sizeLoc);*/
+
 
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float)*4*6, vtxData, GL_DYNAMIC_DRAW);
 	glDrawArrays(GL_POINTS, 0, 4);
@@ -425,9 +414,6 @@ void DrawColorSelectionArea() {
 void renderScene(void)
 {
 	//입력받은 곳에 출력하기 ( vertex shader와 통신)
-	//	GLuint posLoc;
-	//	posLoc = glGetAttribLocation(g_programID, "pos");
-	//	glVertexAttrib3f(posLoc, -0.5, 0.5, 0.0);
 
 	//Clear all pixels
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -447,8 +433,7 @@ void renderScene(void)
 
 
 	//Color
-	//GLuint colLoc = glGetUniformLocation(g_programID, "mCol");
-	//glUniform3f(colLoc, 0.0, 1.0, 0.0);
+
 	GLuint colLoc = glGetAttribLocation(g_programID, "iColor");
 	glVertexAttribPointer(colLoc, 3, GL_FLOAT, GL_FALSE, sizeof(GLfloat) * 6, (void*)(sizeof(GLfloat) * 3));
 	glEnableVertexAttribArray(colLoc);
@@ -524,17 +509,11 @@ void main(int argc, char **argv)
 	g_programID = LoadShaders("VertexShader.txt", "FragmentShader.txt");
 	glUseProgram(g_programID);
 
-	//float vertices[] = { -0.5, -0.3, 0.0, 0.2, 0.7, 0.0 };
-	//float sizes[] = { 10.0, 20.0, 30.0 };
 	
 	//Create Vertex Buffer
 	//GLuint VertexBufferID;
 	glGenBuffers(2, VertexBufferID);
-	//glBindBuffer(GL_ARRAY_BUFFER, VertexBufferID[0]);
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 12, vtxData, GL_DYNAMIC_DRAW);
 
-	//glBindBuffer(GL_ARRAY_BUFFER, VertexBufferID[1]);
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 2, sizes, GL_DYNAMIC_DRAW);
 
 
 	glutMouseFunc(myMouse);	//마우스 콜백 등록
